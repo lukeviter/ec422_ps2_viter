@@ -63,3 +63,17 @@ unemp_recent_summary <- unemp_recent |>
     min_rate = min(unemployment_rate, na.rm=TRUE),
     max_rate = max(unemployment_rate, na.rm=TRUE)
   )
+
+unemp_top_increases <- unemp |>
+  slice_max(order_by = unemployment_rate_change, n=1, by=region, with_ties=TRUE)
+
+unemp_top_decreases <- unemp |>
+  slice_min(order_by = unemployment_rate_change, n=1, by=region, with_ties=TRUE)
+
+unemp_top_increases_sin_covid <- unemp |>
+  filter(year(date) != 2020) |>
+  slice_max(order_by = unemployment_rate_change, n=1, by=region, with_ties=TRUE)
+
+unemp_top_decreases_sin_covid <- unemp |>
+  filter(year(date) != 2020) |>
+  slice_min(order_by = unemployment_rate_change, n=1, by=region, with_ties=TRUE)
