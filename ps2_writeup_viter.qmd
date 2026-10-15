@@ -1,0 +1,158 @@
+---
+title: "Problem Set 2"
+author: "Luke Viter"
+date: today
+format: 
+  html:
+    toc: true
+    embed-resources: true
+---
+
+## **GitHub repository:**
+
+<https://github.com/lukeviter/ec422_ps2_viter.git>
+
+```{r}
+#| include: false
+load("my_environment.RDATA")
+```
+
+## Data
+
+The data in this problem set is the monthly unemployment rate in four states, as well as for the United States overall. The numbers come from the Federal Reserve Economic Data database, ranging from 1976 to 2026.
+
+```{r}
+#| include: false
+
+library(tidyquant)
+library(tidyverse)
+
+unemp_raw <- tq_get(
+  c("UNRATE", "ORUR", "CAUR", "TXUR", "NYUR"),
+  get = "economic.data",
+  from = "1976-01-01"
+)
+
+head(unemp_raw)
+```
+
+The unpolished version of the data looks like this:
+
+```{r}
+#| echo: false
+
+library(tidyverse)
+
+unemp_raw <- read_rds("data/unemp_raw.rds")
+
+head(unemp_raw)
+```
+
+And the more polished version of the data looks like this:
+
+```{r}
+#| echo: false
+unemp <- unemp_raw |>
+  rename(unemployment_rate = price) |>
+  mutate(
+    region = case_when(
+      symbol == "UNRATE" ~ "United States",
+      symbol == "ORUR" ~ "Oregon",
+      symbol == "CAUR" ~ "California",
+      symbol == "TXUR" ~ "Texas",
+      symbol == "NYUR" ~ "New York"
+    )
+  )
+
+unemp <- unemp |>
+  arrange(region, date) |>
+  group_by(region) |>
+  mutate(
+    unemployment_rate = replace(
+      unemployment_rate,
+      date == as.Date("2025-10-01"),
+      unemployment_rate[date == as.Date("2025-09-01")]
+    )
+  ) |>
+  ungroup ()
+
+unemp <- unemp |>
+  arrange(region, date) |>
+  group_by(region) |>
+  mutate(unemployment_rate_change = unemployment_rate-lag(unemployment_rate, n=1)) |>
+  ungroup()
+
+head(unemp)
+
+```
+
+## Wrangling
+
+1.  The following is a table of values, representing significant statistics for the entire set of data available from FRED and separated regionally.
+
+```{r}
+
+knitr::kable(unemp_summary)
+```
+
+2.  The following is a similar table of values, representing the same regionally-separated significant statistics from the available FRED. This time, however, the data is only from January 1st, 2015 onward.
+
+```{r}
+knitr::kable(unemp_recent_summary)
+```
+
+3.  The following is a table representing the greatest increases in the unemployment rate, separated regionally and excluding the year 2020 in order to account for the dramatic changes experienced during COVID-19.
+
+```{r}
+knitr::kable(unemp_top_increases_sin_covid)
+```
+
+4.  The following is a very similar table, this time representing the greatest decreases in the unemployment rate, again separated regionally and excluding the year 2020.
+
+```{r}
+knitr::kable(unemp_top_decreases_sin_covid)
+```
+
+## Visualization
+
+1.  The following is a singluar line plot that tracks the unemployment rate across time, for the full range of the data set, making no regional distinction.
+
+```{r}
+ggplot(unemp, aes(x=date, y=unemployment_rate)) +
+  geom_line(color="hotpink") +
+  labs(title= "Unemployment Rate over Time", x = "Date", y = "Unemployment Rate") +
+  theme_minimal()
+```
+
+2.  The following is a set of five, regionally-distinct line plots that track the unemployment rate across time, for the full range of the data set.
+
+```{r}
+ggplot(unemp, aes(x=date, y=unemployment_rate)) +
+  geom_line(color="#1F51FF") +
+  labs(title= "Unemployment Rate over Time, Regionally", x = "Date", y = "Unemployment Rate") +
+  facet_wrap(~region) +
+  theme_minimal()
+```
+
+3.  The following is a bar graph displaying the mean unemployment rate across the five regions explored in the data set, ordered least to greatest, for the full time range of data available.
+
+```{r}
+ggplot(unemp_summary, aes(x=fct_reorder(region, mean_rate), y=mean_rate)) +
+  geom_col(fill="#FFA500") +
+  labs(title="Mean Unemployment Rate, Regionally", x="Region", y="Mean Unemployment Rate") +
+  theme_minimal()
+```
+
+4.  The following is a set of five, regionally-distinct histograms showing the distribution of the unemployment across the full time range of the data available. I chose to create these histograms so that I could analyze the frequency with which each region would be considered to have a "reasonable" unemployment rate. I also used this to compare across regions, looking at the skew of each graph to see which regions seemed to have this "reasonable" unemployment rate more often.
+
+```{r}
+ggplot(unemp, aes(y=unemployment_rate)) +
+  geom_histogram(bins=50, fill="limegreen") +
+  labs(title="Unemployment Rate Incidence, Regionally", x="Unemployment Rate", y="Incidence") +
+  facet_wrap(~region) +
+  theme_minimal()
+```
+
+## Reflection
+
+Reflecting on this problem set, I am first of all grateful to have already taken EC 421 and had a decent amount of experience with R and coding with respect to this program. The things I found more straightforward were things like navigating the different file and folder locations, as well as knowing where to run certain lines of code to achieve the results I wanted. However, I had a lot of trouble at first rendering things properly in my quarto document. For some reason, I could not get my tables to show up correctly. However, I learned a couple of useful tricks, like loading in my data in a hidden R chunk within the quarto in order to have complete access to the various tables I created in the R Script. Moreover, I definitely feel more comfortable utilizing GitHub and doing commits, and I'm looking forward to this becoming an even more natural part of my process.

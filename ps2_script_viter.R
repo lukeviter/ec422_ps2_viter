@@ -89,7 +89,7 @@ ggplot(unemp, aes(x=date, y=unemployment_rate)) +
   facet_wrap(~region) +
   theme_minimal()
 
-ggplot(unemp_summary, aes(x=fct_reorder(region, mean_rate), y=mean_rate), color="hotpink") +
+ggplot(unemp_summary, aes(x=fct_reorder(region, mean_rate), y=mean_rate)) +
   geom_col(fill="#FFA500") +
     labs(title="Mean Unemployment Rate, Regionally", x="Region", y="Mean Unemployment Rate") +
     theme_minimal()
@@ -101,3 +101,4 @@ ggplot(unemp, aes(y=unemployment_rate)) +
   labs(title="Unemployment Rate Incidence, Regionally", x="Unemployment Rate", y="Incidence") +
   facet_wrap(~region) +
   theme_minimal()
+
