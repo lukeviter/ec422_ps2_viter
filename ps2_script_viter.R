@@ -41,8 +41,8 @@ unemp <- unemp |>
 
 unemp <- unemp |>
   arrange(region, date) |>
-  group_by(date) |>
-  mutate(unemployment_rate_change = unemployment_rate - lag(unemployment_rate)) |>
+  group_by(region) |>
+  mutate(unemployment_rate_change = unemployment_rate-lag(unemployment_rate, n=1)) |>
   ungroup()
 
 
